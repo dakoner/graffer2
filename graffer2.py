@@ -80,9 +80,7 @@ class GraphScene(QtWidgets.QGraphicsScene):
             l = len(self.model.G.nodes())-1
             item.name = f"Node {l}"
             self.model.rowsInserted.emit(QtCore.QModelIndex(), l, l)
-            event.accept()
-        else:
-            event.ignore()
+           
         return super().mousePressEvent(event)
         
         
