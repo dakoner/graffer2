@@ -25,43 +25,37 @@ class Node(QtWidgets.QGraphicsEllipseItem):
         #self.setBrush(QtGui.QGradient(QtGui.QGradient.SaintPetersburg))
         self.setFlags(QtWidgets.QGraphicsItem.ItemSendsGeometryChanges | QtWidgets.QGraphicsItem.ItemIsMovable)
 
-    def mousePressEvent(self, event):
-        print("mouse press event", self, event)
-        return super().mousePressEvent(event)
-        
-    # def mouseReleaseEvent(self, event):
-    #     print("mouse relase event", event)
-    #     return super().mouseReleaseEvent(event)
-
-    def mouseMoveEvent(self, event):
-        print("mouse move event", self, event)
-        return super().mouseMoveEvent(event)
-
-    # def itemChange(self, *args, **kwargs):
-    #     print("itemChange", args, kwargs)
-    #     # if args[0] == QtWidgets.QGraphicsItem.ItemSceneChange:
-    #     #     print("Item changed", args, kwargs)
-    #     # if args[0] == QtWidgets.QGraphicsItem.ItemPositionHasChanged:
-    #     #     print(f"Item {self.node} changed: {args[1]}")
-    #     return super().itemChange(*args, **kwargs)
-
-
 class GraphScene(QtWidgets.QGraphicsScene):
-    def __init__(self, *args, **kwargs):
+    def inserted(self, obj, first, last):
+        print("inserted", obj, first, last)
+        print(self.model.index(first, 0).data())
+
+    def __init__(self, listView, *args, **kwargs):
+        self.listView = listView
+        self.model = QtGui.QStandardItemModel()
+        self.model.rowsInserted.connect(self.inserted)
+        self.listView.setModel(self.model)
+
         super().__init__(*args, **kwargs)
 
-        self.G = nx.balanced_tree(2, 3)   
-        pos = nx.spring_layout(self.G)
+        self.G = nx.Graph()
 
 
-        for node in self.G.nodes():
+        #print(dir(QtWidgets.QApplication.instance()))
+        #self.listView = QtWidgets.QApplication.instance().main_window.findChild(QtWidgets.QListView, "listView")
+        #print(self.listView)
+    def addGraph(self, g, pos):
+
+        for node in g.nodes():
             item = Node(0, 0, .01, .01)
             self.addItem(item)
+            n = QtGui.QStandardItem(f"Node {node}")
+            n.setData("foo")
+            self.model.appendRow(n)
             item.node = node
             item.setPos(*pos[node])
-
-
-        for edge in self.G.edges():
+        print(self.model.index(0, 0).data())
+        for edge in g.edges():
             p0 = pos[edge[0]]
             p1 = pos[edge[1]]
             item = Edge(p0[0]+.025, p0[1]+.025, p1[0]+.025, p1[1]+.025)
@@ -74,8 +68,9 @@ class GraphScene(QtWidgets.QGraphicsScene):
         if item is None:
             item = Node(0, 0, .01, .01)
             self.addItem(item)
-            i = max(self.G.nodes)
+            i = max(self.G.nodes)+1
             self.G.add_node(i)
+            self.model.appendRow(QtGui.QStandardItem(str(i)))
             item.node = i
             item.setPos(event.scenePos())
             event.accept()
@@ -83,13 +78,6 @@ class GraphScene(QtWidgets.QGraphicsScene):
             event.ignore()
         return super().mousePressEvent(event)
         
-    # def mouseReleaseEvent(self, event):
-    #     print("scene mouse relase event", event)
-        
-    #     return super().mouseReleaseEvent(event)
-
-    # def mouseMoveEvent(self, event):
-    #     print("scene mouse move event", event)
         
     
 class MainWindow(QtWidgets.QMainWindow):
@@ -98,14 +86,10 @@ class MainWindow(QtWidgets.QMainWindow):
 
         loadUi("graffer2.ui", self)
 
-        self.scene = GraphScene()
+        self.listView = self.findChild(QtWidgets.QListView, "listView")
+        self.scene = GraphScene(self.listView)
         self.graphicsView = self.findChild(QtWidgets.QGraphicsView, "graphicsView")
         self.graphicsView.setScene(self.scene)
-        
-        # self.graphicsView.setDragMode(QtWidgets.QGraphicsView.ScrollHandDrag)
-        # self.graphicsView.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOn)
-        # self.graphicsView.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOn)
-
         self.loggerDockWidget = self.findChild(QtWidgets.QDockWidget, "dockWidget_3")
         preditor.configure("editor")
         self.preditor = preditor.launch()
@@ -125,6 +109,9 @@ class QApplication(QtWidgets.QApplication):
         self.main_window = MainWindow()
         self.main_window.show()
 
+        G = nx.balanced_tree(2, 3)   
+        pos = nx.spring_layout(G)
+        self.main_window.graphicsView.scene().addGraph(G, pos)
 
 if __name__ == '__main__':
     signal.signal(signal.SIGINT, signal.SIG_DFL)
