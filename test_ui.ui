@@ -16,7 +16,7 @@
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout">
     <item>
-     <widget class="QGraphicsView" name="graphicsView"/>
+     <widget class="GrafferGraphicsView" name="graphicsView"/>
     </item>
    </layout>
   </widget>
@@ -70,6 +70,13 @@
    </property>
   </action>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>GrafferGraphicsView</class>
+   <extends>QGraphicsView</extends>
+   <header>test_ui</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>
